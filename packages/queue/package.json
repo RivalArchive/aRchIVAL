@@ -1,0 +1,24 @@
+{
+	"name": "@archival/queue",
+	"version": "0.1.0",
+	"private": true,
+	"license": "AGPL-3.0-or-later",
+	"exports": {
+		".": "./src/index.ts",
+		"./*": "./src/*.ts"
+	},
+	"scripts": {
+		"test": "bun test",
+		"typecheck": "tsc"
+	},
+	"dependencies": {
+		"@archival/core": "workspace:*",
+		"hono": "^4.7.4"
+	},
+	"devDependencies": {
+		"typescript": "^5.8.2"
+	},
+	"peerDependencies": {
+		"@types/node": "^22.13.10"
+	}
+}

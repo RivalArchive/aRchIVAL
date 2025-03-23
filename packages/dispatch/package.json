@@ -1,0 +1,23 @@
+{
+	"name": "@archival/dispatch",
+	"version": "0.1.0",
+	"private": true,
+	"license": "AGPL-3.0-or-later",
+	"scripts": {
+		"text": "bun test",
+		"typecheck": "tsc",
+		"dev": "bun run ./dev/index.ts"
+	},
+	"dependencies": {
+		"@archival/core": "workspace:*",
+		"@archival/fetch": "workspace:*",
+		"@archival/queue": "workspace:*",
+		"hono": "^4.7.5"
+	},
+	"devDependencies": {
+		"typescript": "^5.8.2"
+	},
+	"peerDependencies": {
+		"@types/node": "^22.13.10"
+	}
+}
