@@ -21,6 +21,13 @@ devshell.mkShell {
     };
   };
 
+  env = [
+    {
+      name = "PODMAN_COMPOSE_WARNING_LOGS";
+      value = "false";
+    }
+  ];
+
   commands = (
     lib.lists.forEach deps (d: {
       package = d;

@@ -1,0 +1,111 @@
+---
+networks:
+  loki:
+
+volumes:
+  tempo-data:
+  prometheus-data:
+  minio-data:
+
+services:
+  loki:
+    hostname: "loki"
+    image: docker.io/grafana/loki:3.4.2
+    command: "-config.file=/etc/loki/config.yaml -target=all"
+    ports:
+      - 3100:3100
+    volumes:
+      - ./loki-config.yaml:/etc/loki/config.yaml
+    depends_on:
+      - minio
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loki
+
+  tempo:
+    hostname: "tempo"
+    image: docker.io/grafana/tempo:2.7.1
+    command: "-target=scalable-single-binary -config.file=/etc/tempo.yaml"
+    ports:
+      - 3200:3200
+    volumes:
+      - ./tempo-config.yaml:/etc/tempo.yaml
+      - tempo-data:/var/tempo
+    depends_on:
+      - minio
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loki
+
+  prometheus:
+    hostname: "prometheus"
+    image: docker.io/prom/prometheus:v3.2.1
+    command:
+      - --config.file=/etc/prometheus.yaml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+      - --enable-feature=native-histograms
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus-config.yaml:/etc/prometheus.yaml
+      - prometheus-data:/prometheus
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/-/ready || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loki
+
+  minio:
+    hostname: "minio"
+    # For minio, the latest tag points to the latest stable release.
+    image: docker.io/minio/minio:latest
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /data/loki-data && \
+        mkdir -p /data/tempo-data && \
+        minio server /data
+    environment:
+      - MINIO_PROMETHEUS_AUTH_TYPE=public
+    ports:
+      - 9000:9000
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 15s
+      timeout: 20s
+      retries: 5
+    networks:
+      - loki
+
+  grafana:
+    hostname: "grafana"
+    image: docker.io/grafana/grafana-oss:11.5.2
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/ds.yaml
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loki

@@ -1,6 +1,5 @@
 # Logs
 
-logs
 _.log
 npm-debug.log_
 yarn-debug.log*
@@ -174,3 +173,6 @@ dist
 # Nix outputs
 
 result
+
+# Test artifacts
+func-*.log
