@@ -19,13 +19,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUIDv7 } from "bun";
 
+import type { Queue } from "../src/index";
 import { LocalQueue } from "../src/localqueue";
-import type { Queue } from "../src/queue";
 import { checkConformanceForQueue } from "./conformance.ts";
 
-checkConformanceForQueue("LocalQueue::memory", (): Queue => new LocalQueue());
+checkConformanceForQueue("LocalQueue-memory", (): Queue => new LocalQueue());
 checkConformanceForQueue(
-	"LocalQueue::disk",
+	"LocalQueue-disk",
 	(): Queue =>
 		new LocalQueue({
 			filename: join(

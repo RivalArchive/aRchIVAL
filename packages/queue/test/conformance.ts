@@ -20,6 +20,7 @@ import { faker } from "@faker-js/faker";
 
 import type { JsonObject } from "@archival/core/jsont";
 
+import { Context, ContextCancelledError } from "@archival/core/context";
 import type { Queue } from "../src/index";
 
 function createRandomMessage(): JsonObject {
@@ -32,7 +33,7 @@ function createRandomMessage(): JsonObject {
 }
 
 export function checkConformanceForQueue(name: string, newQueue: () => Queue) {
-	describe(`conformance-${name}`, async () => {
+	describe(`unit-conformance-${name}`, async () => {
 		it("can be connected and disconnected", async () => {
 			const myQueue = newQueue();
 			let result = await myQueue.connect();
@@ -52,7 +53,7 @@ export function checkConformanceForQueue(name: string, newQueue: () => Queue) {
 				const sendResult = await myQueue.send(msg);
 				expect(sendResult.err).toBeUndefined();
 
-				const receiveResult = await myQueue.receive();
+				const receiveResult = await myQueue.receive(new Context());
 				expect(receiveResult.err).toBeUndefined();
 				expect(receiveResult.ok).toEqual(msg);
 			}
@@ -81,7 +82,7 @@ export function checkConformanceForQueue(name: string, newQueue: () => Queue) {
 
 				const receiveMsgs: Promise<undefined | JsonObject>[] = msgs.map((msg) =>
 					myQueue
-						.receive()
+						.receive(new Context())
 						.then((result) => {
 							expect(result.err).toBeUndefined();
 							expect(msgs).toContain(msg);
@@ -95,6 +96,26 @@ export function checkConformanceForQueue(name: string, newQueue: () => Queue) {
 					expect(receivedMsgs.sort()).toEqual(msgs.sort());
 				});
 			}
+		});
+
+		it("can cancel receiving a message via a context", async () => {
+			const myQueue: Queue = newQueue();
+			const connectResult = await myQueue.connect();
+			expect(connectResult.err).toBeUndefined();
+
+			const msg = { key: "value" };
+			const sendResult = await myQueue.send(msg);
+			expect(sendResult.err).toBeUndefined();
+
+			const ctx: Context = new Context();
+			let receiveResult = await myQueue.receive(ctx);
+			expect(receiveResult.err).toBeUndefined();
+			expect(receiveResult.ok).toEqual(msg);
+
+			ctx.cancel();
+			receiveResult = await myQueue.receive(ctx);
+			expect(receiveResult.ok).toBeUndefined();
+			expect(receiveResult.err).toEqual(ContextCancelledError);
 		});
 	});
 }

@@ -16,6 +16,7 @@
  * see <https://www.gnu.org/licenses/>.
  */
 import { Database, type Statement } from "bun:sqlite";
+import { type Context, ContextCancelledError } from "@archival/core/context";
 import {
 	newSimpleBug,
 	newSimpleError,
@@ -192,7 +193,7 @@ export class LocalQueue implements Queue {
 		return { ok: undefined };
 	}
 
-	async receive(): Promise<Result<JsonObject>> {
+	async receive(ctx: Context): Promise<Result<JsonObject>> {
 		if (this.#database === undefined) {
 			const connectResult = await this.connect();
 			if (connectResult.err !== undefined) {
@@ -211,7 +212,7 @@ export class LocalQueue implements Queue {
 		}
 
 		let result: MessagesTableRow | null = null;
-		while (result == null) {
+		while (result == null && !ctx.done()) {
 			try {
 				result = this.#deleteQuery.get();
 			} catch (e: unknown) {
@@ -223,6 +224,10 @@ export class LocalQueue implements Queue {
 				};
 			}
 			await Bun.sleep(50);
+		}
+
+		if (result == null) {
+			return { err: ContextCancelledError };
 		}
 
 		let msg: JsonObject;
