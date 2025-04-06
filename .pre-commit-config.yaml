@@ -44,7 +44,7 @@ repos:
     files: \.(js|jsx|ts|tsx|json|jsonc)$
   - id: typecheck
     name: typecheck
-    entry: bun run --filter './packages/**' typecheck
+    entry: bun -b run --filter './packages/**' typecheck
     language: system
     types: [text]
     files: \.(js|jsx|ts|tsx|json|jsonc)$
