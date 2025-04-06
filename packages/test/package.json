@@ -1,0 +1,20 @@
+{
+	"name": "@archival/test",
+	"version": "0.1.0",
+	"private": true,
+	"license": "AGPL-3.0-or-later",
+	"exports": {
+		"./*": "./src/*.ts"
+	},
+	"scripts": {
+		"test": "bun test",
+		"typecheck": "tsc"
+	},
+	"devDependencies": {
+		"@faker-js/faker": "^9.6.0",
+		"typescript": "^5.8.2"
+	},
+	"peerDependencies": {
+		"@types/node": "^22.13.10"
+	}
+}
