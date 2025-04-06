@@ -1,3 +1,4 @@
+import type { Context } from "@archival/core/context";
 /**
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
@@ -47,7 +48,7 @@ export interface Queue extends AsyncDisposable {
 
 	/**
 	 * Get a message from the queue. Promise resolves when a message is
-	 * obtained from the queue.
+	 * obtained from the queue or when the given context is cancelled.
 	 */
-	receive: () => Promise<Result<JsonObject>>;
+	receive: (ctx: Context) => Promise<Result<JsonObject>>;
 }
