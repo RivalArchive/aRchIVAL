@@ -64,7 +64,9 @@ export class ComposeHandler {
 		this.#composeCommand = opts.composeCommand ?? DefaultComposeCommand;
 		this.#composeFile = opts.composeFile ?? "./compose.yaml";
 		this.#testName = opts.testName;
-		this.#id = `${this.#testName}-${faker.string.nanoid(8)}`;
+		// Podman allows for uppercase alphanumeric characters, but docker does not.
+		this.#id =
+			`${this.#testName}-${faker.string.nanoid(8)}`.toLocaleLowerCase();
 		const prefix =
 			`${this.#composeCommand} -p ${this.#id} -f ${this.#composeFile}`.split(
 				" ",
