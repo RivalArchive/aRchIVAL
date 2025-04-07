@@ -25,6 +25,9 @@ jobs:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
     - run: |
+        nix develop --command bun install
+
+    - run: |
         nix develop --command \
           pre-commit run \
             --all --hook-stage=manual --config ./.pre-commit-config.yaml --verbose
@@ -42,6 +45,9 @@ jobs:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
     - run: |
+        nix develop --command bun install
+
+    - run: |
         nix develop --command \
           bun test -t unit --timeout=30000
 
@@ -56,6 +62,9 @@ jobs:
     - uses: cachix/install-nix-action@v31
       with:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - run: |
+        nix develop --command bun install
 
     - run: |
         nix develop --command \
