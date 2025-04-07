@@ -13,7 +13,7 @@ defaults:
     shell: bash
 
 jobs:
-  pre-commit:
+  checks:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -24,48 +24,22 @@ jobs:
       with:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
-    - run: |
+    - name: install deps
+      run: |
         nix develop --command bun install
 
-    - run: |
+    - name: pre-commit
+      run: |
         nix develop --command \
           pre-commit run \
             --all --hook-stage=manual --config ./.pre-commit-config.yaml --verbose
 
-  unit-test:
-    needs: pre-commit
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        persist-credentials: true
-
-    - uses: cachix/install-nix-action@v31
-      with:
-        github_access_token: ${{ secrets.GITHUB_TOKEN }}
-
-    - run: |
-        nix develop --command bun install
-
-    - run: |
+    - name: unit tests
+      run: |
         nix develop --command \
           bun test -t unit --timeout=30000
 
-  func-test:
-    needs: unit-test
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        persist-credentials: true
-
-    - uses: cachix/install-nix-action@v31
-      with:
-        github_access_token: ${{ secrets.GITHUB_TOKEN }}
-
-    - run: |
-        nix develop --command bun install
-
-    - run: |
+    - name: functional tests
+      run: |
         nix develop --command \
           bun test -t func --timeout=120000
