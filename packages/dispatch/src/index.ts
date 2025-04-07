@@ -17,56 +17,60 @@
  */
 import { type Context, Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { type RequestIdVariables, requestId } from "hono/request-id";
 
-import { simplifyError } from "@archival/core/error";
-import {
-	LogKey,
-	LogValue,
-	type ObservabilityLoggingVariables,
-	type StructuredLoggerMiddlewareVariables,
-	logWithProperties,
-	structuredLoggerMiddleware,
-} from "@archival/core/logging";
+import { newSimpleError, simplifyError } from "@archival/core/error";
 import type { Result } from "@archival/core/result";
 import type { FetchRequest } from "@archival/fetch";
 import type { Queue } from "@archival/queue";
+import {
+	LogKey,
+	LogValue,
+	type SignalLogsEnv,
+	structuredLoggerMiddleware,
+	withProperties,
+} from "@archival/signal/logs";
 
+import { BUILD_VERSION, PACKAGE_NAME } from "signal/src/build";
 import { type InspectUrlResult, inspectUrl } from "./urls";
 
 const logKeyFetchRequest = "fetchRequest";
 const logKeyFetchPushAttempts = "attempt";
 
 const responseUnknownContentType =
-	"unable to dispatch URL, unknown contenttype";
+	"unable to dispatch URL, unknown content type";
 
 export type DispatchEnv = {
 	Bindings: {
 		FETCH_QUEUE: Queue;
-	} & ObservabilityLoggingVariables;
-	Variables: RequestIdVariables & StructuredLoggerMiddlewareVariables;
-};
+	};
+} & SignalLogsEnv;
 
 export const dispatchApp = new Hono<DispatchEnv>();
 
-dispatchApp.use("*", requestId());
 dispatchApp.use("*", structuredLoggerMiddleware);
 dispatchApp.post("/", dispatchPostHandler);
 
 async function dispatchPostHandler(c: Context<DispatchEnv>) {
-	const log = logWithProperties(
-		{
-			[LogKey.RequestId]: c.get("requestId"),
-		},
-		c.get("logger"),
-	);
-
 	const url = await c.req.text();
 	const inspectResult: InspectUrlResult = inspectUrl(url);
 
 	if (inspectResult.contentType === undefined) {
-		throw new HTTPException(400, { cause: responseUnknownContentType });
+		throw new HTTPException(400, {
+			cause: newSimpleError(responseUnknownContentType, {
+				context: { url: url, checks: inspectResult.checks },
+			}),
+		});
 	}
+
+	const log = withProperties(
+		{
+			[LogKey.ServiceName]: PACKAGE_NAME,
+			[LogKey.ServiceVersion]: BUILD_VERSION,
+			[LogKey.CodeComponent]: "dispatchPostHandler",
+			[LogKey.Url]: url,
+		},
+		c.get("logger"),
+	);
 
 	const fetchRequest: FetchRequest = {
 		url: url,
@@ -76,27 +80,46 @@ async function dispatchPostHandler(c: Context<DispatchEnv>) {
 	let attempt: number;
 	let result: Result<undefined>;
 	for (attempt = 0; attempt < 5; attempt++) {
+		log({
+			[LogKey.SeverityText]: LogValue.SeverityTextDebug,
+			[LogKey.SeverityNumber]: LogValue.SeverityNumberDebug,
+			[LogKey.Message]: "sending FetchRequest to queue",
+			[logKeyFetchRequest]: fetchRequest,
+		});
+
 		result = await c.env.FETCH_QUEUE.send(fetchRequest);
 		if (result.err === undefined) {
 			break;
 		}
 
+		if (attempt === 4) {
+			log({
+				[LogKey.SeverityText]: LogValue.SeverityTextFatal,
+				[LogKey.SeverityNumber]: LogValue.SeverityNumberFatal,
+				[LogKey.Message]: "unable to publish new fetch request to queue",
+				[LogKey.Error]: simplifyError(result.err),
+				[logKeyFetchRequest]: fetchRequest,
+				[logKeyFetchPushAttempts]: attempt + 1,
+			});
+
+			throw new HTTPException(500, { cause: result.err });
+		}
+
 		log({
-			[LogKey.Error]: simplifyError(result.err),
+			[LogKey.SeverityText]: LogValue.SeverityTextWarn,
+			[LogKey.SeverityNumber]: LogValue.SeverityNumberWarn,
 			[LogKey.Message]: "error while publishing new fetch request to queue",
+			[LogKey.Error]: simplifyError(result.err),
 			[logKeyFetchRequest]: fetchRequest,
 			[logKeyFetchPushAttempts]: attempt + 1,
 		});
-
-		if (attempt === 4) {
-			throw new HTTPException(500, { cause: result.err });
-		}
 
 		await new Promise((resolve) => setTimeout(resolve, 500));
 	}
 
 	log({
-		[LogKey.Debug]: LogValue.Debug,
+		[LogKey.SeverityText]: LogValue.SeverityTextDebug,
+		[LogKey.SeverityNumber]: LogValue.SeverityNumberDebug,
 		[LogKey.Message]: "published new fetch request to queue",
 		[logKeyFetchRequest]: fetchRequest,
 		[logKeyFetchPushAttempts]: attempt + 1,

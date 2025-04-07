@@ -144,7 +144,7 @@ function generateGoodTwitterPostUrl(): string {
 
 const NUM_TEST_CASES = 50;
 
-describe("inspectUrl base checks", () => {
+describe("unit-inspectUrl-base", () => {
 	console.log(`inspectUrl base checks faker seed: ${faker.seed()}`);
 
 	it.each(
@@ -190,7 +190,7 @@ describe("inspectUrl base checks", () => {
 	});
 });
 
-describe("inspectUrl twitter checks", async () => {
+describe("unit-inspectUrl-twitter", async () => {
 	console.log(`inspectUrl twitter checks faker seed: ${faker.seed()}`);
 
 	it.each(
