@@ -46,7 +46,7 @@ function createRandomSimpleError(): SimpleError {
 	};
 }
 
-describe("SimpleError", () => {
+describe("unit-SimpleError", () => {
 	it("is JSON serializable", async () => {
 		console.log(`Faker seed: ${faker.seed()}`);
 		for (let i = 0; i < 500; i++) {
@@ -57,7 +57,7 @@ describe("SimpleError", () => {
 	});
 });
 
-describe("simplifyError", () => {
+describe("unit-simplifyError", () => {
 	it("returns given SimpleError", async () => {
 		console.log(`Faker seed: ${faker.seed()}`);
 		for (let i = 0; i < 500; i++) {
