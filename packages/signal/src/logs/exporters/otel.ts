@@ -426,6 +426,22 @@ export type OtelJsonHttpLogExporterOptions = {
 	 * The queue is considered empty if a new item hasn't been received in `receiveTimeout` milliseconds.
 	 */
 	softStop: boolean;
+
+	/**
+	 * Number of times to retry sending logs to an OTEL endpoint. The status codes that will be retried are:
+	 * 408, 409, 425, 429, 500, 502, 503 and 504.
+	 */
+	sendRetries: number;
+
+	/**
+	 * The delay between attempts to push logs to the OTEL endpoint, in milliseconds.
+	 */
+	sendRetryDelay: number;
+
+	/**
+	 * The maximum number of milliseconds a request to an OTEL endpoint can take before it is abandoned.
+	 */
+	sendTimeout: number;
 };
 
 /**
@@ -449,6 +465,9 @@ export class OtelJsonHttpLogExporter {
 	#fullBatchTimeout: number;
 	#receiveTimeout: number;
 	#softStop: boolean;
+	#sendRetries: number;
+	#sendRetryDelay: number;
+	#sendTimeout: number;
 	#logger: StructuredLogFunction;
 
 	constructor(options: OtelJsonHttpLogExporterOptions) {
@@ -458,6 +477,9 @@ export class OtelJsonHttpLogExporter {
 		this.#fullBatchTimeout = options.fullBatchTimeout;
 		this.#receiveTimeout = options.receiveTimeout;
 		this.#softStop = options.softStop;
+		this.#sendRetries = options.sendRetries;
+		this.#sendRetryDelay = options.sendRetryDelay;
+		this.#sendTimeout = options.sendTimeout;
 
 		this.#logger = withProperties(
 			{
@@ -490,6 +512,9 @@ export class OtelJsonHttpLogExporter {
 				{
 					body: request,
 					method: "POST",
+					retry: this.#sendRetries,
+					retryDelay: this.#sendRetryDelay,
+					timeout: this.#sendTimeout,
 				},
 			);
 		} catch (e: unknown) {
