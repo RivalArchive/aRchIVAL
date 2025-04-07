@@ -12,6 +12,7 @@
 		"@archival/core": "workspace:*",
 		"@archival/fetch": "workspace:*",
 		"@archival/queue": "workspace:*",
+		"@archival/signal": "workspace:*",
 		"hono": "^4.7.5"
 	},
 	"devDependencies": {

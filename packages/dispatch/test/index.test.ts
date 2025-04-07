@@ -33,7 +33,7 @@ function newTestBindings(): DispatchEnv["Bindings"] {
 	};
 }
 
-describe("Dispatch::POST::root", () => {
+describe("unit-Dispatch-POST-root", () => {
 	it("ignores empty requests", async () => {
 		const response = await dispatchApp.fetch(
 			newDispatchRequest(""),

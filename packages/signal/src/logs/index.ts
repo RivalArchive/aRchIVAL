@@ -15,36 +15,6 @@
  * You should have received a copy of the GNU Affero General Public License along with aRchIVAL. If not,
  * see <https://www.gnu.org/licenses/>.
  */
-import { HTTPException } from "hono/http-exception";
-import { logger } from "hono/logger";
-
-import { simplifyError } from "@archival/core/error";
-import { LocalQueue } from "@archival/queue/localqueue";
-import { LogKey } from "@archival/signal/logs";
-
-import { type DispatchEnv, dispatchApp } from "../src/index.ts";
-
-const bindings: DispatchEnv["Bindings"] = {
-	FETCH_QUEUE: new LocalQueue(),
-	LOG_DEBUG: true,
-};
-
-dispatchApp.use(logger());
-dispatchApp.onError((err, c) => {
-	c.get("logger")({
-		[LogKey.Error]: simplifyError(err),
-	});
-
-	if (err instanceof HTTPException) {
-		return err.getResponse();
-	}
-
-	throw err;
-});
-
-console.log("Serving at localhost:8080");
-Bun.serve({
-	port: 8080,
-	hostname: "localhost",
-	fetch: (request) => dispatchApp.fetch(request, bindings),
-});
+export * from "./fns";
+export * from "./kvs";
+export * from "./middleware";
