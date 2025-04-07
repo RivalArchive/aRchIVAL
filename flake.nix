@@ -31,9 +31,6 @@
           deps = with pkgs; [
             # Project management
             bun
-            # Functional testing
-            podman
-            podman-compose
             # Linting, formatting
             pre-commit
             nixfmt-rfc-style
