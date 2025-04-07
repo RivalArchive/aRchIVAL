@@ -16,6 +16,9 @@ defaults:
   run:
     shell: bash
 
+env:
+  COMPOSE_COMMAND: "docker compose"
+
 jobs:
   checks:
     runs-on: ubuntu-latest
