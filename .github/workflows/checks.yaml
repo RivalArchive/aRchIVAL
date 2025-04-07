@@ -27,7 +27,7 @@ jobs:
     - run: |
         nix develop --command \
           pre-commit run \
-            --all --hook-stage=manual --config ./pre-commit.yaml --verbose
+            --all --hook-stage=manual --config ./.pre-commit-config.yaml --verbose
 
   unit-test:
     needs: pre-commit
