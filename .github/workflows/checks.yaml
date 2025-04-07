@@ -1,0 +1,62 @@
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: true
+
+    - uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - run: |
+        nix develop --command \
+          pre-commit run \
+            --all --hook-stage=manual --config ./pre-commit.yaml --verbose
+
+  unit-test:
+    needs: pre-commit
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: true
+
+    - uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - run: |
+        nix develop --command \
+          bun test -t unit --timeout=30000
+
+  func-test:
+    needs: unit-test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: true
+
+    - uses: cachix/install-nix-action@v31
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - run: |
+        nix develop --command \
+          bun test -t func --timeout=120000
