@@ -357,12 +357,9 @@ describe("func-OtelJsonHttpLogExporter", async () => {
 		testName: "func-OtelJsonHttpLogExporter",
 	});
 
-	beforeAll(async () => {
-		await compose.precheck();
-	});
-
 	beforeEach(async () => {
 		console.log(`Faker seed: ${faker.seed()}`);
+		await compose.precheck();
 		await compose.up("loki");
 	});
 
