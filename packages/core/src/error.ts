@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Affero General Public License along with aRchIVAL. If not,
  * see <https://www.gnu.org/licenses/>.
  */
-import type * as jsont from "./jsont";
+import type { JsonObject } from "./jsont";
 
 /**
  * Simple type for handling errors.
@@ -49,7 +49,7 @@ export type SimpleError = {
 	/**
 	 * JSON object containing dynamic variables that are specific to this instance of the SimpleError.
 	 */
-	context?: jsont.JsonObject;
+	context?: JsonObject;
 	/**
 	 * Indicates if the procedure which caused the SimpleError is retryable.
 	 *
@@ -89,7 +89,7 @@ export function newSimpleError(
 	options: {
 		name?: string | undefined;
 		cause?: SimpleError | undefined;
-		context?: jsont.JsonObject | undefined;
+		context?: JsonObject | undefined;
 		retryable?: boolean | undefined;
 		overloaded?: boolean | undefined;
 		remote?: boolean | undefined;
@@ -160,7 +160,7 @@ export function simplifyError(err: Error | SimpleError | unknown): SimpleError {
 export function newSimpleBug(
 	message: string,
 	options: {
-		context?: jsont.JsonObject | undefined;
+		context?: JsonObject | undefined;
 		cause?: SimpleError | undefined;
 	} = {},
 ): SimpleError {
